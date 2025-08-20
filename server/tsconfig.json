@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",                // modern JS output
+    "module": "CommonJS",              // Node uses CommonJS
+    "rootDir": "src",                  // source files
+    "outDir": "dist",                  // compiled JS output
+    "strict": true,                     // enable strict type checking
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

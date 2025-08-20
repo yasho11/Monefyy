@@ -1,0 +1,36 @@
+
+---
+
+### 📝 `.gitignore` (monorepo safe)
+```gitignore
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Env files
+.env
+apps/**/.env
+
+# Build
+dist/
+build/
+apps/**/dist
+apps/**/build
+
+# Logs
+logs/
+*.log
+*.csv
+
+# Database
+*.sqlite
+*.db
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
