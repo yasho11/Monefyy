@@ -12,7 +12,7 @@
 import sequelize from "./config/db";
 import app from "./index";
 import authRoutes from "./routes/authRoutes";
-import financeRoutes from "./routes/financeRoutes";
+import transactionRoutes from "./routes/transactionRoutes";
 import passport from "./config/passport"; // Initialize passport strategies
 
 const PORT = process.env.PORT || 5000;
@@ -20,9 +20,7 @@ const PORT = process.env.PORT || 5000;
 app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
-
-
-app.use("/api/finance", financeRoutes);
+app.use("/api/transactions", transactionRoutes);
 
 (async () => {
   try {
