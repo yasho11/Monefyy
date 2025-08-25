@@ -5,14 +5,16 @@ class User extends Model {
   public id!: number;
   public username!: string;
   public email!: string;
-  public password_hash?: string; // optional for Google users
-  public google_id?: string;     // optional, only for Google users
-  public provider!: string;      // "local" or "google"
+  public password_hash?: string;
+  public google_id?: string;
+  public provider!: string;
   public subscription!: string;
   public tier!: string;
   public level!: number;
   public exp_points!: number;
+  public lifetime_exp!: number;   // NEW
   public streak_count!: number;
+  public last_active_date?: Date; // NEW
 }
 
 User.init(
@@ -34,7 +36,7 @@ User.init(
     },
     password_hash: {
       type: DataTypes.TEXT,
-      allowNull: true, // optional for Google users
+      allowNull: true,
     },
     google_id: {
       type: DataTypes.STRING(100),
@@ -43,7 +45,7 @@ User.init(
     provider: {
       type: DataTypes.STRING(20),
       allowNull: false,
-      defaultValue: "local", // "local" for normal registration, "google" for Google login
+      defaultValue: "local",
     },
     subscription: {
       type: DataTypes.STRING(20),
@@ -61,9 +63,17 @@ User.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    lifetime_exp: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     streak_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+    },
+    last_active_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {

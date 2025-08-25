@@ -13,7 +13,9 @@ import sequelize from "./config/db";
 import app from "./index";
 import authRoutes from "./routes/authRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
-import passport from "./config/passport"; // Initialize passport strategies
+import expRoutes from "./routes/expRoutes";
+import gamifyRoutes from "./routes/gamifyRoutes";
+import passport from "./config/passport"; 
 
 const PORT = process.env.PORT || 5000;
 
@@ -21,6 +23,8 @@ app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/exp", expRoutes);
+app.use("/api/gamify", gamifyRoutes);
 
 (async () => {
   try {

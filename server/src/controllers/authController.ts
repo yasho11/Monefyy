@@ -6,6 +6,7 @@ import validator from "validator";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { generateToken } from "../utils/jwt";
+import { checkIn } from "./gamifyController";
 
 dotenv.config();
 
@@ -95,8 +96,12 @@ export const login = async (req: Request, res: Response) => {
     if (!user.password_hash || typeof user.password_hash !== "string") {
       return res.status(400).json({ message: "Invalid credentials" });
     }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+    // Call check-in logic after successful login
+    await checkIn(req as AuthRequest, res);
 
     res.json({
       id: user.id,
@@ -104,12 +109,11 @@ export const login = async (req: Request, res: Response) => {
       email: user.email,
       token: generateToken(user.id),
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 // @desc   Get current user
 // @route  GET /api/auth/me
 export const getMe = async (req: AuthRequest, res: Response) => {
