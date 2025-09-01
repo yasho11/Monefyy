@@ -1,23 +1,25 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import { AuthRequest } from "./transactionController"; // or your shared Auth type
 import { updateStreak } from "../services/streakService";
 import { addExperience as addExp } from "../services/expService";
-
+import User from "../models/User";
 // Handle streak check-in
-export const checkIn = async (req: AuthRequest, res: Response) => {
+// server/src/controllers/gamifyController.ts
+
+
+
+export const checkIn = async (user: User, res: Response) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
+    const userId = Number(user.id); // or req.user.id if using auth
     const result = await updateStreak(userId);
-
-    res.json(result);
+    return result;
   } catch (err: any) {
-    res.status(500).json({ message: "Error updating streak", error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 
-// Handle manual EXP awarding (e.g. completing goals)
+
+// User awards themselves EXP (e.g. after completing tasks)
 export const awardExp = async (req: AuthRequest, res: Response) => {
   try {
     const { points } = req.body;
@@ -36,5 +38,27 @@ export const awardExp = async (req: AuthRequest, res: Response) => {
     });
   } catch (err: any) {
     res.status(500).json({ message: "Error awarding EXP", error: err.message });
+  }
+};
+
+
+export const giveExp = async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.id);
+    const { exp } = req.body;
+
+    if (!exp || typeof exp !== "number") {
+      return res.status(400).json({ message: "Invalid EXP amount" });
+    }
+
+    const updatedUser = await addExp(userId, exp);
+    res.json({
+      message: `Added ${exp} EXP`,
+      level: updatedUser.level,
+      current_exp: updatedUser.exp_points,
+      lifetime_exp: updatedUser.lifetime_exp,
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
   }
 };

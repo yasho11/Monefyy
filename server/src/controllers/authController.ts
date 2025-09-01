@@ -100,14 +100,18 @@ export const login = async (req: Request, res: Response) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Call check-in logic after successful login
-    await checkIn(req as AuthRequest, res);
+    // Call streak/check-in logic but do NOT send a response inside it
+    const streakResult = await checkIn(user, res);
 
+    // Send the login + streak info in one response
     res.json({
       id: user.id,
       username: user.username,
       email: user.email,
       token: generateToken(user.id),
+      streak: streakResult?.streak ?? 0,
+      expGained: streakResult?.expGained ?? 0,
+      message: streakResult?.message ?? "",
     });
   } catch (err: any) {
     console.error(err);
