@@ -6,6 +6,7 @@ import {
   updateQuestProgress,
   completeQuest,
   getAllActiveQuests,
+  addQuest,
 } from "../services/questService";
 
 
@@ -98,5 +99,22 @@ export const fetchActiveQuests = async (_req: Request, res: Response) => {
     res.json({ quests });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+
+/**
+ * 
+ * Create Quest
+ * POST /api/quests
+ */
+
+export const createQuest = async (req: Request, res: Response) => {
+  try {
+    const { title, description, type, expReward, isActive } = req.body;
+    const quest = await addQuest(title, description, type, expReward, isActive);
+    res.status(201).json(quest);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };

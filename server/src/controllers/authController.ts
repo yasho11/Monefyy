@@ -3,10 +3,9 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import User from "../models/User";
 import validator from "validator";
-import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { generateToken } from "../utils/jwt";
 import { checkIn } from "./gamifyController";
+import { syncAllQuestsToUser, updateAllUserQuestProgress } from "../services/questService";
 
 dotenv.config();
 
@@ -68,6 +67,8 @@ export const register = async (req: Request, res: Response) => {
       email: user.email,
       token: generateToken(user.id),
     });
+
+    await syncAllQuestsToUser(user.id);
   } catch (err: any) {
     console.error(err);
 
@@ -100,10 +101,10 @@ export const login = async (req: Request, res: Response) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Call streak/check-in logic but do NOT send a response inside it
+    // Run streak/check-in logic (don’t send response inside it)
     const streakResult = await checkIn(user, res);
 
-    // Send the login + streak info in one response
+    // ✅ Send everything back in one response
     res.json({
       id: user.id,
       username: user.username,
@@ -112,24 +113,33 @@ export const login = async (req: Request, res: Response) => {
       streak: streakResult?.streak ?? 0,
       expGained: streakResult?.expGained ?? 0,
       message: streakResult?.message ?? "",
+      lastActive: user.last_active_date
     });
+
+    await syncAllQuestsToUser(user.id);
+
+    
+    // Re-check quests after login
+    await updateAllUserQuestProgress(user.id);
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 // @desc   Get current user
 // @route  GET /api/auth/me
 export const getMe = async (req: AuthRequest, res: Response) => {
   if (!req.user) return res.status(401).json({ message: "Not authorized" });
-
+  // Re-check quests after login
+    await updateAllUserQuestProgress(req.user.id);
   res.json(req.user);
 };
 
 // @desc   Handle Google OAuth callback and return user info + JWT
 // @route  GET /api/auth/google/callback
 
-export const googleCallback = (req: Request, res: Response) => {
+export const googleCallback = async(req: Request, res: Response) => {
   // Passport attaches user + token to req.user
   const user = (req.user as any)?.user;
   const token = (req.user as any)?.token;
@@ -137,7 +147,10 @@ export const googleCallback = (req: Request, res: Response) => {
   if (!user || !token) {
     return res.status(400).json({ message: "Google login failed" });
   }
-
+  
+  await syncAllQuestsToUser(user.id);
+  // Re-check quests after login
+    await updateAllUserQuestProgress(user.id);
   // Send JWT to client
   return res.status(200).json({
     id: user.id,
@@ -145,4 +158,6 @@ export const googleCallback = (req: Request, res: Response) => {
     email: user.email,
     token,
   });
+
+ 
 };

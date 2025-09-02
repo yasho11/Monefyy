@@ -6,6 +6,7 @@ import {
   updateProgress,
   completeUserQuest,
   fetchActiveQuests,
+  createQuest,
 } from "../controllers/questController";
 import { protect } from "../middlewares/authMiddleware"; // your JWT auth middleware
 
@@ -45,5 +46,15 @@ router.post("/complete", protect, completeUserQuest as RequestHandler);
  * @access  Public
  */
 router.get("/active", fetchActiveQuests as RequestHandler);
+
+/**
+ * @route POST /api/quests/create
+ * @desc  Create all a quest in the system
+ * @access Private
+ */
+
+router.post("/create", createQuest);
+
+
 
 export default router;

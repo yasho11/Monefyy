@@ -1,0 +1,92 @@
+[
+  {
+    "title": "Login 5 Days in a Row",
+    "description": "Log in 5 consecutive days",
+    "type": "streak",
+    "progress_field": "streak_count",
+    "target": 5,
+    "exp_reward": 50,
+    "is_active": true
+  },
+  {
+    "title": "Earn 100 EXP",
+    "description": "Accumulate 100 experience points",
+    "type": "exp",
+    "progress_field": "lifetime_exp",
+    "target": 100,
+    "exp_reward": 50,
+    "is_active": true
+  },
+  {
+    "title": "Complete First Quest",
+    "description": "Finish your very first quest",
+    "type": "custom",
+    "progress_field": null,
+    "target": 1,
+    "exp_reward": 20,
+    "is_active": true
+  },
+  {
+    "title": "Daily Check-in",
+    "description": "Log in today to receive EXP",
+    "type": "daily",
+    "progress_field": "streak_count",
+    "target": 1,
+    "exp_reward": 10,
+    "is_active": true
+  },
+  {
+    "title": "Weekly Check-in",
+    "description": "Log in at least 3 times this week",
+    "type": "weekly",
+    "progress_field": "streak_count",
+    "target": 3,
+    "exp_reward": 30,
+    "is_active": true
+  },
+  {
+    "title": "Reach Level 5",
+    "description": "Reach level 5 by earning EXP",
+    "type": "exp",
+    "progress_field": "level",
+    "target": 5,
+    "exp_reward": 100,
+    "is_active": true
+  },
+  {
+    "title": "Reach Level 10",
+    "description": "Reach level 10 by earning EXP",
+    "type": "exp",
+    "progress_field": "level",
+    "target": 10,
+    "exp_reward": 200,
+    "is_active": true
+  },
+  {
+    "title": "Login 10 Days in a Row",
+    "description": "Log in 10 consecutive days",
+    "type": "streak",
+    "progress_field": "streak_count",
+    "target": 10,
+    "exp_reward": 100,
+    "is_active": true
+  },
+  {
+    "title": "Earn 500 EXP",
+    "description": "Accumulate 500 experience points",
+    "type": "exp",
+    "progress_field": "lifetime_exp",
+    "target": 500,
+    "exp_reward": 100,
+    "is_active": true
+  },
+  {
+    "title": "Complete 5 Quests",
+    "description": "Finish any 5 quests",
+    "type": "custom",
+    "progress_field": "quests_completed",
+    "target": 5,
+    "exp_reward": 50,
+    "is_active": true
+  }
+]
