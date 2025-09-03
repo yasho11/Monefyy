@@ -6,6 +6,9 @@ import User from "../models/User";
 // Handle streak check-in
 // server/src/controllers/gamifyController.ts
 
+//! To-do : Future:
+//!  1. Implement Badge system
+//!  2. Implement Daily Rewards
 
 
 export const checkIn = async (user: User, res: Response) => {

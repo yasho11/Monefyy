@@ -13,7 +13,12 @@ interface AuthRequest extends Request {
   user?: any;
 }
 
-
+//! To do:
+//!  1. Implement Forgot Password
+//!  2. Implement Reset Password
+//!  3. Implement Email verification : Maybe later
+//!  4. Implement Currency Selection
+//!  5. Implement Edit profile (Including the currency change)
 
 // @desc   Register new user
 // @route  POST /api/auth/register
