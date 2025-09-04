@@ -10,8 +10,12 @@ import User from "../models/User";
 //!  1. Implement Badge system
 //!  2. Implement Daily Rewards
 
+interface SUser{
+  id: Number;
 
-export const checkIn = async (user: User, res: Response) => {
+}
+
+export const checkIn = async (user: SUser, res: Response) => {
   try {
     const userId = Number(user.id); // or req.user.id if using auth
     const result = await updateStreak(userId);

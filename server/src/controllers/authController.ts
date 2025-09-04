@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
-import User from "../models/User";
 import validator from "validator";
-import { generateToken } from "../utils/jwt";
+
+import * as authService from "../services/authService";
 import { checkIn } from "./gamifyController";
 import { syncAllQuestsToUser, updateAllUserQuestProgress } from "../services/questService";
 
@@ -13,30 +12,19 @@ interface AuthRequest extends Request {
   user?: any;
 }
 
-//! To do:
-//!  1. Implement Forgot Password
-//!  2. Implement Reset Password
-//!  3. Implement Email verification : Maybe later
-//!  4. Implement Currency Selection
-//!  5. Implement Edit profile (Including the currency change)
-
 // @desc   Register new user
 // @route  POST /api/auth/register
-
 export const register = async (req: Request, res: Response) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, currency } = req.body;
 
-  // Check required fields
-  if (!username || !email || !password) {
+  if (!username || !email || !password || !currency) {
     return res.status(400).json({ message: "Please provide all fields" });
   }
 
-  // Validate email format
   if (!validator.isEmail(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
-  // Validate password strength
   if (
     !validator.isStrongPassword(password, {
       minLength: 8,
@@ -53,82 +41,41 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
-    // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: "User with this email already exists" });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(password, salt);
-
-    // Create user
-    const user = await User.create({ username, email, password_hash });
-
-    res.status(201).json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      token: generateToken(user.id),
-    });
-
+    const user = await authService.registerUser({ username, email, password, currency });
     await syncAllQuestsToUser(user.id);
+
+    res.status(201).json(user);
   } catch (err: any) {
     console.error(err);
-
-    // Handle Sequelize unique constraint error just in case
-    if (err.name === "SequelizeUniqueConstraintError") {
-      return res.status(400).json({ message: "Email already registered" });
-    }
-
-    res.status(500).json({ message: "Server error" });
+    res.status(400).json({ message: err.message || "Registration failed" });
   }
 };
 
-
 // @desc   Login user
 // @route  POST /api/auth/login
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: AuthRequest, res: Response) => {
   const { email, password } = req.body;
-
-  if (!email || !password)
-    return res.status(400).json({ message: "Please provide all fields" });
+  if (!email || !password) return res.status(400).json({ message: "Please provide all fields" });
 
   try {
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    const user = await authService.loginUser(email, password);
 
-    if (!user.password_hash || typeof user.password_hash !== "string") {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-
-    // Run streak/check-in logic (don’t send response inside it)
+    // Run streak/check-in logic
     const streakResult = await checkIn(user, res);
 
-    // ✅ Send everything back in one response
+    await syncAllQuestsToUser(user.id);
+    await updateAllUserQuestProgress(user.id);
+
     res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      token: generateToken(user.id),
+      ...user,
       streak: streakResult?.streak ?? 0,
       expGained: streakResult?.expGained ?? 0,
       message: streakResult?.message ?? "",
-      lastActive: user.last_active_date
+      lastActive: user.last_active_date,
     });
-
-    await syncAllQuestsToUser(user.id);
-
-    
-    // Re-check quests after login
-    await updateAllUserQuestProgress(user.id);
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(400).json({ message: err.message || "Login failed" });
   }
 };
 
@@ -136,33 +83,99 @@ export const login = async (req: Request, res: Response) => {
 // @route  GET /api/auth/me
 export const getMe = async (req: AuthRequest, res: Response) => {
   if (!req.user) return res.status(401).json({ message: "Not authorized" });
-  // Re-check quests after login
-    await updateAllUserQuestProgress(req.user.id);
+
+  await updateAllUserQuestProgress(req.user.id);
   res.json(req.user);
 };
 
-// @desc   Handle Google OAuth callback and return user info + JWT
+// @desc   Handle Google OAuth callback
 // @route  GET /api/auth/google/callback
-
-export const googleCallback = async(req: Request, res: Response) => {
-  // Passport attaches user + token to req.user
+export const googleCallback = async (req: Request, res: Response) => {
   const user = (req.user as any)?.user;
   const token = (req.user as any)?.token;
 
   if (!user || !token) {
     return res.status(400).json({ message: "Google login failed" });
   }
-  
+
   await syncAllQuestsToUser(user.id);
-  // Re-check quests after login
-    await updateAllUserQuestProgress(user.id);
-  // Send JWT to client
+  await updateAllUserQuestProgress(user.id);
+
   return res.status(200).json({
     id: user.id,
     username: user.username,
     email: user.email,
     token,
   });
+};
 
- 
+// @desc   Send email verification code
+// @route  POST /api/auth/send-verification
+export const sendVerification = async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await authService.sendVerificationCode(req.user.id);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// @desc   Verify email
+// @route  POST /api/auth/verify-email
+export const verifyEmail = async (req: AuthRequest, res: Response) => {
+  const { code } = req.body;
+  try {
+    const result = await authService.verifyEmail(req.user.id, code);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// @desc   Send reset password code
+// @route  POST /api/auth/forgot-password
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  try {
+    const result = await authService.sendResetPasswordCode(email);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// @desc   Reset password
+// @route  POST /api/auth/reset-password
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, code, newPassword } = req.body;
+  try {
+    const result = await authService.resetPassword(email, code, newPassword);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// @desc   Update profile
+// @route  PUT /api/auth/profile
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  const { username, currency } = req.body;
+  try {
+    const updated = await authService.updateProfile(req.user.id, { username, currency });
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// @desc   Update currency
+// @route  PUT /api/auth/currency
+export const setCurrency = async (req: AuthRequest, res: Response) => {
+  const { currency } = req.body;
+  try {
+    const result = await authService.setCurrency(req.user.id, currency);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
 };

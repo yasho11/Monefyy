@@ -12,9 +12,18 @@ class User extends Model {
   public tier!: string;
   public level!: number;
   public exp_points!: number;
-  public lifetime_exp!: number;   // NEW
+  public lifetime_exp!: number;
   public streak_count!: number;
-  public last_active_date?: Date; // NEW
+  public last_active_date?: Date;
+
+  // NEW
+  public currency!: string;
+  public avatar_url!: string;
+
+  public is_verified!: boolean;
+  public verification_code?: string;
+  public reset_code?: string;
+  public reset_code_expires?: Date;
 }
 
 User.init(
@@ -72,6 +81,33 @@ User.init(
       defaultValue: 0,
     },
     last_active_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    // 🔥 NEW FIELDS
+    currency: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      defaultValue: "USD",
+    },
+    avatar_url: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    verification_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    reset_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    reset_code_expires: {
       type: DataTypes.DATE,
       allowNull: true,
     },

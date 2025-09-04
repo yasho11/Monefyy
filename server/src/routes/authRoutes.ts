@@ -1,17 +1,22 @@
 import express from "express";
-import { register, login, getMe, googleCallback } from "../controllers/authController";
-import { protect } from "../middlewares/authMiddleware";
 import passport from "passport";
-
+import { protect } from "../middlewares/authMiddleware";
+import * as authController from "../controllers/authController";
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.get("/me", protect, getMe);
+// -------------------- Auth Routes --------------------
 
+// Register a new user
+router.post("/register", authController.register);
 
-// Start Google OAuth login
+// Login existing user
+router.post("/login", authController.login);
+
+// Get current user profile
+router.get("/me", protect, authController.getMe);
+
+// Google OAuth login
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -21,6 +26,26 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false }),
-  googleCallback // our controller to send JWT to client
+  authController.googleCallback
 );
+
+// -------------------- Extra Features --------------------
+
+// Forgot password (send reset code)
+router.post("/forgot-password", authController.forgotPassword);
+
+// Reset password (using code sent via email)
+router.post("/reset-password", authController.resetPassword);
+
+// Update currency preference
+router.put("/currency", protect, authController.setCurrency);
+
+// Edit profile (username, avatar, etc.)
+router.put("/edit-profile", protect, authController.updateProfile);
+
+
+router.post("/send-verification", protect, authController.sendVerification);
+
+router.post("/verify-email", protect, authController.verifyEmail);
+
 export default router;
