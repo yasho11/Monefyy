@@ -8,7 +8,7 @@ import {
   fetchActiveQuests,
   createQuest,
 } from "../controllers/questController";
-import { protect } from "../middlewares/authMiddleware"; // your JWT auth middleware
+import { adminProtect, protect } from "../middlewares/authMiddleware"; // your JWT auth middleware
 
 const router = Router();
 
@@ -45,7 +45,7 @@ router.post("/complete", protect, completeUserQuest as RequestHandler);
  * @desc    Get all active quests in the system
  * @access  Public
  */
-router.get("/active", fetchActiveQuests as RequestHandler);
+router.get("/active", protect, fetchActiveQuests as RequestHandler);
 
 /**
  * @route POST /api/quests/create
@@ -53,7 +53,7 @@ router.get("/active", fetchActiveQuests as RequestHandler);
  * @access Private
  */
 
-router.post("/create", createQuest);
+router.post("/create", protect , adminProtect ,createQuest);
 
 
 

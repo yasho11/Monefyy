@@ -24,6 +24,8 @@ class User extends Model {
   public verification_code?: string;
   public reset_code?: string;
   public reset_code_expires?: Date;
+
+  public UserType?: "admin" | "user" | "guest";
 }
 
 User.init(
@@ -62,7 +64,7 @@ User.init(
     },
     tier: {
       type: DataTypes.STRING(20),
-      defaultValue: "novice",
+      defaultValue: "Beginner",
     },
     level: {
       type: DataTypes.INTEGER,
@@ -111,6 +113,10 @@ User.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    UserType: {
+      type: DataTypes.ENUM("admin", "user", "guest"),
+      defaultValue: "user",
+    }
   },
   {
     sequelize,

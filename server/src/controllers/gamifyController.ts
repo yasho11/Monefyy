@@ -3,6 +3,7 @@ import { AuthRequest } from "./transactionController"; // or your shared Auth ty
 import { updateStreak } from "../services/streakService";
 import { addExperience as addExp } from "../services/expService";
 import User from "../models/User";
+import { getLeaderboard } from "../services/gamifyService";
 // Handle streak check-in
 // server/src/controllers/gamifyController.ts
 
@@ -67,5 +68,23 @@ export const giveExp = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+export const leaderboard = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id; // assuming protect middleware adds req.user
+    const limit = Number(req.query.limit) || 50;
+
+    if(!userId) return res.status(401).json({message: "Unauthorized"});
+
+    //Fetch Leaderboard
+    const board = await getLeaderboard(userId, limit);
+    res.json({ leaderboard: board });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };

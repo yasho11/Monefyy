@@ -9,5 +9,12 @@
     "username": "subu",
     "email": "subu@example.com",
     "password": "Ya$hodeep123"
+  },
+  { 
+  "username" : "gentyokai",
+  "usertype" : "admin",
+  "email": "gentyokai@gmail.com",
+  "password": "NewStrongPass1!"
   }
+
 ]
