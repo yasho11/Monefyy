@@ -1,7 +1,8 @@
-import express from "express";
+import express, { RequestHandler } from "express";
 import passport from "passport";
 import { protect } from "../middlewares/authMiddleware";
 import * as authController from "../controllers/authController";
+import { createReferralCode } from "../controllers/referralController";
 
 const router = express.Router();
 
@@ -47,5 +48,7 @@ router.put("/edit-profile", protect, authController.updateProfile);
 router.post("/send-verification", protect, authController.sendVerification);
 
 router.post("/verify-email", protect, authController.verifyEmail);
+
+router.get("/generate-referral", protect, createReferralCode as RequestHandler);
 
 export default router;

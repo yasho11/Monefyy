@@ -10,9 +10,10 @@ interface RegisterData {
   email: string;
   password: string;
   currency: string;
+  referred_by?: number;
 }
 
-export const registerUser = async ({ username, email, password, currency }: RegisterData) => {
+export const registerUser = async ({ username, email, password, currency, referred_by }: RegisterData) => {
   const salt = await bcrypt.genSalt(10);
   const password_hash = await bcrypt.hash(password, salt);
 
@@ -25,6 +26,7 @@ export const registerUser = async ({ username, email, password, currency }: Regi
     currency,
     avatar_url,
     is_verified: false,
+    referred_by,
   });
 
   // Generate and send verification code
@@ -41,6 +43,7 @@ export const registerUser = async ({ username, email, password, currency }: Regi
     currency: user.currency,
     avatar_url: user.avatar_url,
     token: generateToken(user.id),
+    referred_by: user.referred_by,
   };
 };
 

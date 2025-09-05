@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import dotenv from "dotenv";
 import validator from "validator";
-
 import * as authService from "../services/authService";
 import { checkIn } from "./gamifyController";
 import { syncAllQuestsToUser, updateAllUserQuestProgress } from "../services/questService";
+import User from "../models/User";
+import { Op } from "sequelize";
+import { addExperience } from "../services/expService";
 
 dotenv.config();
 
@@ -14,8 +16,9 @@ interface AuthRequest extends Request {
 
 // @desc   Register new user
 // @route  POST /api/auth/register
+
 export const register = async (req: Request, res: Response) => {
-  const { username, email, password, currency } = req.body;
+  const { username, email, password, currency, referralCode } = req.body;
 
   if (!username || !email || !password || !currency) {
     return res.status(400).json({ message: "Please provide all fields" });
@@ -41,8 +44,47 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await authService.registerUser({ username, email, password, currency });
+    // --- Basic anti-abuse: check if email already exists
+    const existingUser = await User.findOne({
+      where: { email: { [Op.iLike]: email } },
+    });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    // Create the user first
+    const user = await authService.registerUser({
+      username,
+      email,
+      password,
+      currency,
+    });
+
+    // Assign quests
     await syncAllQuestsToUser(user.id);
+
+    // --- Referral handling ---
+    if (referralCode) {
+      const referrer = await User.findOne({ where: { referral_code: referralCode } });
+
+      if (referrer && referrer.id !== user.id) {
+        // Anti-abuse idea: only grant referrer reward if new user verifies email later
+        // For now, grant immediately but can store in "pending rewards" table
+
+        // Reward referrer
+        await addExperience(referrer.id, 200);
+
+        // Reward new user
+        await addExperience(user.id, 50);
+
+        // Mark who referred this user
+        const userInstance = await User.findByPk(user.id);
+        if (userInstance) {
+          userInstance.referred_by = referrer.id;
+          await userInstance.save();
+        }
+      }
+    }
 
     res.status(201).json(user);
   } catch (err: any) {
@@ -50,6 +92,7 @@ export const register = async (req: Request, res: Response) => {
     res.status(400).json({ message: err.message || "Registration failed" });
   }
 };
+
 
 // @desc   Login user
 // @route  POST /api/auth/login
