@@ -5,7 +5,6 @@ class ReminderLog extends Model {
   public id!: number;
   public user_id!: number;
   public type!: "streak" | "quest" | "goal" | "transaction";
-  public channel!: "push" | "email";
   public sent_at!: Date;
 }
 
@@ -22,10 +21,6 @@ ReminderLog.init(
     },
     type: {
       type: DataTypes.ENUM("streak", "quest", "goal", "transaction"),
-      allowNull: false,
-    },
-    channel: {
-      type: DataTypes.ENUM("push", "email"),
       allowNull: false,
     },
     sent_at: {

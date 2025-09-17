@@ -152,3 +152,8 @@ export const setCurrency = async (userId: number, currency: string) => {
 };
 
 
+
+export async function markEmailSent(user: User) {
+  user.last_email_sent = new Date();
+  await user.save();
+}

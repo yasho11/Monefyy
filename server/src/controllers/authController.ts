@@ -222,3 +222,14 @@ export const setCurrency = async (req: AuthRequest, res: Response) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+
+export const isEmailVerified = async(req: AuthRequest, res: Response) => {
+  try{
+    const user = await User.findByPk(req.user.id);
+    if(!user) return res.status(404).json({message: "User not found"});
+    return res.json ({is_verified: user.is_verified});
+  }catch(err: any){
+    res.status(400).json({message: err.message});
+  }
+}

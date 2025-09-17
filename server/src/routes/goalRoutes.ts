@@ -1,19 +1,65 @@
 import { RequestHandler, Router } from "express";
+import { body, param } from "express-validator";
 import {
   createGoal,
   getGoals,
   updateGoal,
   completeGoal,
-  deleteGoal
+  deleteGoal,
 } from "../controllers/goalController";
 import { protect } from "../middlewares/authMiddleware";
+import { validateRequest } from "../middlewares/validate";
 
 const router = Router();
 
-router.post("/create", protect,createGoal as RequestHandler);
+// Create Goal
+router.post(
+  "/create",
+  protect,
+  [
+    body("title").isString().trim().notEmpty().withMessage("Title is required"),
+    body("description").isString().trim().optional(),
+    body("priority")
+      .isIn(["low", "medium", "high"])
+      .withMessage("Priority must be low, medium, or high"),
+  ],
+  validateRequest,
+  createGoal as RequestHandler
+);
+
+// Get All Goals
 router.get("/get", protect, getGoals as RequestHandler);
-router.put("/update/:id", updateGoal);
-router.put("/:id/complete", protect ,completeGoal as RequestHandler); // manual completion
-router.delete("/delete/:id", deleteGoal);
+
+// Update Goal
+router.put(
+  "/update/:id",
+  protect,
+  [
+    param("id").isInt().withMessage("Goal ID must be an integer"),
+    body("title").optional().isString().trim(),
+    body("description").optional().isString().trim(),
+    body("priority").optional().isIn(["low", "medium", "high"]),
+  ],
+  validateRequest,
+  updateGoal as RequestHandler
+);
+
+// Complete Goal
+router.put(
+  "/:id/complete",
+  protect,
+  [param("id").isInt().withMessage("Goal ID must be an integer")],
+  validateRequest,
+  completeGoal as RequestHandler
+);
+
+// Delete Goal
+router.delete(
+  "/delete/:id",
+  protect,
+  [param("id").isInt().withMessage("Goal ID must be an integer")],
+  validateRequest,
+  deleteGoal as RequestHandler
+);
 
 export default router;

@@ -1,4 +1,7 @@
 import User from "../models/User";
+import {sendEmail} from "../utils/mailer";
+import {markEmailSent} from "../services/authService";
+
 
 //Hard coded tier ladder
 const TIER_LADDER = [
@@ -30,22 +33,42 @@ export async function addExperience(userId: number, expGained: number) {
 }
 
 
-export function updateLevel(user: any) {
+
+
+export async function updateLevel(user: any) {
   let expNeeded = expRequiredForLevel(user.level);
+  let leveledUp = false;
 
   while (user.exp_points >= expNeeded) {
     user.exp_points -= expNeeded;
     user.level += 1;
-    expNeeded = expRequiredForLevel(user.level);
+    leveledUp = true;
 
     // Update tier after each level-up
     updateTier(user);
+
+    expNeeded = expRequiredForLevel(user.level);
   }
+
+  // Send level-up email if leveled up
+  if (leveledUp) {
+    await sendEmail(
+      user.email,
+      "Level Up 🎉",
+      `🎉 Congrats ${user.username}, you've leveled up to Level ${user.level}! Keep progressing!`
+    );
+    console.log(`✅ Level-up email sent to ${user.email}`);
+    markEmailSent(user);
+  }
+
+  // Save user changes
+  await user.save();
 }
 
 
 
-export function updateTier(user: any) {
+
+export async function updateTier(user: any) {
   // Find the highest tier the user qualifies for
   const newTier = TIER_LADDER
     .filter(t => user.level >= t.minLevel)
@@ -53,7 +76,16 @@ export function updateTier(user: any) {
 
   if (newTier && user.tier !== newTier.status) {
     user.tier = newTier.status;
-    // Optional: trigger notification or reward here
-    console.log(`🎉 ${user.username} is now a ${newTier.status}!`);
+
+    // Optional: trigger tier-up email
+    await sendEmail(
+      user.email,
+      "Tier Up! 🎉",
+      `Congrats ${user.username}, you’ve reached the "${newTier.status}" tier! Keep progressing!`
+    );
+
+    await markEmailSent(user);
+
+    console.log(`🎉 ${user.username} is now a ${newTier.status} and email sent!`);
   }
 }

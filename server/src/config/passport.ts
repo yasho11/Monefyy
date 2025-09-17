@@ -2,6 +2,9 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../models/User";
 import { generateToken } from "../utils/jwt";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Load environment variables
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;

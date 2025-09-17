@@ -53,7 +53,7 @@ router.get("/active", protect, fetchActiveQuests as RequestHandler);
  * @access Private
  */
 
-router.post("/create", protect , adminProtect ,createQuest);
+router.post("/create", adminProtect ,createQuest);
 
 
 

@@ -4,6 +4,8 @@ import { updateStreak } from "../services/streakService";
 import { addExperience as addExp } from "../services/expService";
 import User from "../models/User";
 import { getLeaderboard } from "../services/gamifyService";
+import {sendEmail} from "../utils/mailer";
+import {markEmailSent} from "../services/authService";
 // Handle streak check-in
 // server/src/controllers/gamifyController.ts
 
@@ -18,14 +20,32 @@ interface SUser{
 
 export const checkIn = async (user: SUser, res: Response) => {
   try {
-    const userId = Number(user.id); // or req.user.id if using auth
-    const result = await updateStreak(userId);
+    const userId = Number(user.id);
+    const result = await updateStreak(userId); // should return updated streak info
+
+    // result could be { streak_count: number, user: User }
+    const { streak} = result;
+    
+    const updatedUser = await User.findByPk(userId);
+    if(!updatedUser) throw new Error("User not found");
+
+    // Decide if streak email should be sent
+    const milestones = [1, 7, 30, 90, 120, 365];
+    if (milestones.includes(streak)) {
+      await sendEmail(
+        updatedUser.email,
+        "🔥 Streak Reminder!",
+        `Hi ${updatedUser.username}, congrats on your ${streak}-day streak! Keep it going!`
+      );
+      console.log(`✅ Streak email sent to ${updatedUser.email}`);
+      markEmailSent(updatedUser);
+    }
+
     return result;
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 // User awards themselves EXP (e.g. after completing tasks)
 export const awardExp = async (req: AuthRequest, res: Response) => {

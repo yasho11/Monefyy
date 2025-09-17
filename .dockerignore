@@ -1,0 +1,33 @@
+# Node modules (we install inside container)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist
+build
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+
+# Uploads / Downloads (runtime files, not needed in container)
+uploads/
+downloads/
+
+# Docker cache / temp files
+docker-compose.override.yml

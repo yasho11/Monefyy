@@ -34,3 +34,10 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+**/uploads/
+**/downloads/
+
+
+#ignore postgres data folder
+postgres-data/

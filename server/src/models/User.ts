@@ -32,7 +32,6 @@ class User extends Model {
   public referred_by?: number | null; // userId of the referrer (nullable)
 
   // 🔔 Reminder System
-  public last_push_sent?: Date;     // last push notification sent
   public last_email_sent?: Date;    // last email reminder sent
 }
 
@@ -131,17 +130,13 @@ User.init(
       type: DataTypes.STRING(20),
       allowNull: false,
       unique: true,
+      defaultValue: null,
     },
     referred_by: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
 
-    // 🔔 REMINDER SYSTEM
-    last_push_sent: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
     last_email_sent: {
       type: DataTypes.DATE,
       allowNull: true,
