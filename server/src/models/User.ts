@@ -126,12 +126,15 @@ User.init(
     },
 
     // 🔥 REFERRAL SYSTEM
-    referral_code: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      unique: true,
-      defaultValue: null,
-    },
+referral_code: {
+  type: DataTypes.STRING(20),
+  allowNull: false,
+  unique: true,
+  defaultValue: () => {
+    // Generate a unique referral code (e.g., random string)
+    return require('crypto').randomBytes(10).toString('hex').slice(0, 20);
+  },
+},
     referred_by: {
       type: DataTypes.INTEGER,
       allowNull: true,

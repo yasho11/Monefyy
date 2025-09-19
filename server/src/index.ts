@@ -23,7 +23,7 @@ const app = express();
 // CORS Restriction
 // -------------------
 const allowedOrigins = [
-  "http://localhost:3000",     // local frontend
+  "http://localhost:5173",     // local frontend
   "https://monefyy.com",       // production frontend
 ];
 
