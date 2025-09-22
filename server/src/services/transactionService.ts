@@ -4,7 +4,6 @@ import { Op } from "sequelize";
 import fs from "fs";
 import path from 'path';
 import csvParser from "csv-parser";
-import * as XLSX from "xlsx";
 import { format } from 'date-fns';
 
 interface TransactionInput {
@@ -142,41 +141,6 @@ export const getFilteredTransactions = async (userId: number, filters: FilterOpt
     limit: filters.limit,
     offset: filters.offset,
   });
-};
-
-export const importTransactions = async ({ userId, filePath, fileType }: BulkImportOptions) => {
-  let transactions: any[] = [];
-
-  if (fileType === "csv") {
-    transactions = await new Promise((resolve, reject) => {
-      const results: any[] = [];
-      fs.createReadStream(filePath)
-        .pipe(csvParser())
-        .on("data", (row) => results.push(row))
-        .on("end", () => resolve(results))
-        .on("error", (err) => reject(err));
-    });
-  } else {
-    const workbook = XLSX.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    transactions = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-  }
-
-  // Normalize + insert
-  const formatted = transactions.map((t: any) => ({
-    userId,
-    amount: parseFloat(t.amount),
-    type: t.type.toLowerCase(), // "income" or "expense"
-    category: t.category?.toLowerCase(),
-    tag: t.tag || null,
-    recurring: t.recurring === "true" || t.recurring === true,
-    date: new Date(t.date),
-    description: t.description || null,
-  }));
-
-  await Transaction.bulkCreate(formatted);
-
-  return { inserted: formatted.length };
 };
 
 

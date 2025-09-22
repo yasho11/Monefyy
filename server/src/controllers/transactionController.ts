@@ -10,7 +10,6 @@ import {
   updateTransactionById,
   deleteTransactionById,
   getTransactionById,
-  importTransactions,
   generateTransactionsCSV,
 } from "../services/transactionService";
 
@@ -108,27 +107,6 @@ export const getTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// ------------------- Upload CSV/XLSX -------------------
-
-export const uploadTransactions = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-
-    const fileType = req.file.originalname.endsWith(".csv") ? "csv" : "xlsx";
-    const result = await importTransactions({
-      userId,
-      filePath: req.file.path,
-      fileType,
-    });
-
-    res.json({ message: "Transactions uploaded successfully", ...result });
-    await fs.unlink(req.file.path); // delete temp file
-  } catch (err: any) {
-    res.status(500).json({ message: "Error uploading transactions", error: err.message });
-  }
-};
 
 // ------------------- Download CSV -------------------
 

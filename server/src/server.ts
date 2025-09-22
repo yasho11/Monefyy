@@ -1,68 +1,85 @@
 /**
  * server.ts
  * ------------------------
- * Entry point of the application
- * - Starts Express server
- * - Waits for PostgreSQL to be ready with retry logic
+ * Express application setup for Monefyy Beta-1
+ * - Loads environment variables
+ * - Configures CORS with trusted origins
+ * - Configures JSON parser
+ * - Sets up login rate-limiter
+ * - Registers API routes
  */
 
+import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
-dotenv.config(); // Load .env first
+import rateLimit from "express-rate-limit";
 
-import sequelize from "./config/db";
-import app from "./index";
-import authRoutes from "./routes/authRoutes";
-import transactionRoutes from "./routes/transactionRoutes";
-import gamifyRoutes from "./routes/gamifyRoutes";
-import questRoutes from "./routes/questRoutes";
-import goalRoutes from "./routes/goalRoutes";
-import passport from "./config/passport"; 
+dotenv.config({path: '.env.development'});
+console.log("🔹 index.ts loaded, starting index...");
 
-console.log("🔹 server.ts loaded, starting server...");
+const app = express();
 
-// Middleware & Routes
-app.use(passport.initialize());
-app.use("/api/auth", authRoutes);
-app.use("/api/transactions", transactionRoutes);
-app.use("/api/gamify", gamifyRoutes);
-app.use("/api/quests", questRoutes);
-app.use("/api/goals", goalRoutes);
+// -------------------
+// CORS Restriction
+// -------------------
+const allowedOrigins = [
+  "http://localhost:5173",     // local frontend
+  "https://monefyy.com",       // production frontend
+];
 
-const PORT = process.env.PORT || 5000;
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy: This origin is not allowed"));
+      }
+    },
+    credentials: true, // allow cookies, auth headers
+  })
+);
 
-/**
- * Helper function: connect to DB with retries
- */
-async function connectWithRetry(maxRetries = 10, delay = 2000) {
-  let attempt = 0;
+// -------------------
+// Global Middlewares
+// -------------------
+app.use(express.json());
 
-  while (attempt < maxRetries) {
-    try {
-      await sequelize.authenticate();
-      console.log("✅ Database connected successfully");
 
-      await sequelize.sync({ alter: true }); // sync tables
-      console.log("✅ All models were synchronized");
-      return true;
-    } catch (err) {
-      attempt++;
-      console.log(`⚠️ DB not ready, retrying (${attempt}/${maxRetries}) in ${delay / 1000}s...`);
-      await new Promise(res => setTimeout(res, delay));
-    }
-  }
+// ----------------
+// NODE ENVIROMENT
+// ----------------
 
-  throw new Error("❌ Unable to connect to DB after multiple attempts");
-}
+const NODE_ENV = process.env.NODE_ENV;
+console.log("Current NODE_ENV:", NODE_ENV);
 
-/**
- * Start the server
- */
-(async () => {
-  try {
-    await connectWithRetry(); // wait for DB
-    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
-  } catch (err) {
-    console.error(err);
-    process.exit(1); // exit process if DB never becomes available
-  }
-})();
+// -------------------
+// Login Rate Limiter
+// -------------------
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,                   // max 5 login attempts per IP
+  message: {
+    message: "Too many login attempts. Try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// -------------------
+// Routes (Placeholders for Beta-1)
+// -------------------
+app.get("/", (req, res) => {
+  res.send("Monefyy API running !Hell yeah");
+});
+
+// Apply rate limiter only to login
+app.post("/api/auth/login", loginLimiter, (req, res) => {
+  res.send("Login route placeholder 🔐");
+});
+
+// Example: other routes would be imported normally
+// import authRoutes from "./routes/authRoutes";
+// app.use("/api/auth", authRoutes);
+
+export default app;
