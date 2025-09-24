@@ -1,5 +1,5 @@
 /**
- * server.ts
+ * index.ts
  * ------------------------
  * Entry point of the application
  * - Starts Express server

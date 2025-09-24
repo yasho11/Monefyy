@@ -5,7 +5,8 @@ import { protect } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validate"; // the middleware we discussed
 import * as authController from "../controllers/authController";
 import { createReferralCode } from "../controllers/referralController";
-
+import { loginLimiter } from "../server"; 
+ 
 const router = express.Router();
 
 // -------------------- Auth Routes --------------------
@@ -26,6 +27,7 @@ router.post(
 // Login existing user
 router.post(
   "/login",
+  //loginLimiter,
   [
     body("email").isEmail().withMessage("Valid email is required"),
     body("password").notEmpty().withMessage("Password is required"),
@@ -33,6 +35,7 @@ router.post(
   validateRequest,
   authController.login
 );
+
 
 // Get current user profile
 router.get("/me", protect, authController.getMe);
@@ -107,5 +110,19 @@ router.post(
 
 // Generate referral code
 router.get("/generate-referral", protect, createReferralCode as RequestHandler);
+
+//Email verified accounf
+
+router.get("/email-verified", protect, authController.isEmailVerified);
+
+
+// Check auth
+router.get("/check-auth",  protect, authController.checkAuth)
+
+
+
+//! Logout
+
+router.get("/logout", protect, authController.logout);
 
 export default router;

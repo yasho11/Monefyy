@@ -14,6 +14,11 @@ interface AuthRequest extends Request {
   user?: any;
 }
 
+
+//?-------------------------------------------------------------------------------------
+
+
+
 // @desc   Register new user
 // @route  POST /api/auth/register
 
@@ -60,6 +65,15 @@ export const register = async (req: Request, res: Response) => {
       currency,
     });
 
+    
+    // Set the JWT cookie in the controller
+    res.cookie("jwt", user.token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+    });
+
     // Assign quests
     await syncAllQuestsToUser(user.id);
 
@@ -94,6 +108,10 @@ export const register = async (req: Request, res: Response) => {
 };
 
 
+//?-------------------------------------------------------------------------------------
+
+
+
 // @desc   Login user
 // @route  POST /api/auth/login
 export const login = async (req: AuthRequest, res: Response) => {
@@ -103,6 +121,19 @@ export const login = async (req: AuthRequest, res: Response) => {
   try {
     const user = await authService.loginUser(email, password);
 
+
+    const token = user.token;
+
+    // Set the JWT cookie in the controller
+    res.cookie("jwt", user.token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+
+    console.log("Response headers: ", res.getHeaders(), "Token: " , token);
     // Run streak/check-in logic
     const streakResult = await checkIn(user, res);
 
@@ -122,14 +153,53 @@ export const login = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// @desc   Get current user
+
+
+
+//?-------------------------------------------------------------------------------------
+
+
+// @desc   Get current user info
 // @route  GET /api/auth/me
 export const getMe = async (req: AuthRequest, res: Response) => {
-  if (!req.user) return res.status(401).json({ message: "Not authorized" });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
 
-  await updateAllUserQuestProgress(req.user.id);
-  res.json(req.user);
+    const user = req.user;
+
+    // Optionally update quest progress before returning
+    await updateAllUserQuestProgress(user.id);
+
+    // Include any extra computed fields if needed
+    const userData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      currency: user.currency,
+      avatar_url: user.avatar_url,
+      is_verified: user.is_verified,
+      streak: user.streak_count,
+      expGained: user.expGained ?? 0,
+      lastActive: user.last_active_date,
+      subscription: user.subscription ?? null, // optional
+      tier: user.tier ?? null,                 // optional
+      level: user.level ?? null,               // optional
+    };
+
+    return res.json(userData);
+  } catch (err: any) {
+    console.error("Get current user error:", err);
+    return res.status(500).json({ message: "Failed to fetch current user" });
+  }
 };
+
+
+
+//?-------------------------------------------------------------------------------------
+
+
 
 // @desc   Handle Google OAuth callback
 // @route  GET /api/auth/google/callback
@@ -152,6 +222,13 @@ export const googleCallback = async (req: Request, res: Response) => {
   });
 };
 
+
+
+
+
+
+//?-------------------------------------------------------------------------------------
+
 // @desc   Send email verification code
 // @route  POST /api/auth/send-verification
 export const sendVerification = async (req: AuthRequest, res: Response) => {
@@ -162,6 +239,8 @@ export const sendVerification = async (req: AuthRequest, res: Response) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+//?-----------------------------------------------------------------------------------------------
 
 // @desc   Verify email
 // @route  POST /api/auth/verify-email
@@ -175,6 +254,10 @@ export const verifyEmail = async (req: AuthRequest, res: Response) => {
   }
 };
 
+
+
+//?---------------------------------------------------------------------------------------------------
+
 // @desc   Send reset password code
 // @route  POST /api/auth/forgot-password
 export const forgotPassword = async (req: Request, res: Response) => {
@@ -186,6 +269,10 @@ export const forgotPassword = async (req: Request, res: Response) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+
+
+//?--------------------------------------------------------------------------------------------
 
 // @desc   Reset password
 // @route  POST /api/auth/reset-password
@@ -199,6 +286,9 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
+
+//? ------------------------------------------------------------------------
+
 // @desc   Update profile
 // @route  PUT /api/auth/profile
 export const updateProfile = async (req: AuthRequest, res: Response) => {
@@ -210,6 +300,10 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+
+//?---------------------------------------------------------------------------------
+
 
 // @desc   Update currency
 // @route  PUT /api/auth/currency
@@ -224,6 +318,11 @@ export const setCurrency = async (req: AuthRequest, res: Response) => {
 };
 
 
+
+//?--------------------------------------------------------------------------------
+
+//@desc Check if the email is verified
+//@route GET /api/auth/email-verified
 export const isEmailVerified = async(req: AuthRequest, res: Response) => {
   try{
     const user = await User.findByPk(req.user.id);
@@ -232,4 +331,44 @@ export const isEmailVerified = async(req: AuthRequest, res: Response) => {
   }catch(err: any){
     res.status(400).json({message: err.message});
   }
+}
+
+
+
+//?-----------------------------------------------------------------------------------------------
+// @desc Check if the user is authenticated
+// @route GET /api/auth/check-auth
+
+export const checkAuth = async (req: Request, res: Response)=> {
+  try {
+    const user = req.user;
+    if(!user){
+      res.status(401).json({message: "Unauthorized"});
+      return;
+    }
+    res.status(200).json({User: user});
+  } catch (error) {
+
+    console.error(error);
+    res.status(500).json({message: "Internal server error", error});
+
+  }
+}
+
+
+//?-------------------------------------------------------------------------------
+
+// @name: Logout
+// @desc: help logout
+
+export const logout = async(req: Request, res: Response) =>{
+
+  res.clearCookie("jwt", {
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  res.status(200).json({message: "Logged out successfully"});
+
 }

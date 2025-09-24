@@ -6,7 +6,7 @@ dotenv.config();
 const sequelize = new Sequelize(
   process.env.DB_NAME || "monefyy-db",
   process.env.DB_USER || "postgres",
-  process.env.DB_PASS || "6616",
+  process.env.DB_PASS || "postgres",
   {
     host: process.env.DB_HOST || "postgres",
     port: Number(process.env.DB_PORT) || 5432,

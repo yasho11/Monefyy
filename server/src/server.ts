@@ -9,10 +9,13 @@
  * - Registers API routes
  */
 
+//@ts-ignore
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
+import cookieParser from 'cookie-parser';
+
 
 dotenv.config({path: '.env.development'});
 console.log("🔹 index.ts loaded, starting index...");
@@ -44,7 +47,7 @@ app.use(
 // Global Middlewares
 // -------------------
 app.use(express.json());
-
+app.use(cookieParser());
 
 // ----------------
 // NODE ENVIROMENT
@@ -56,7 +59,7 @@ console.log("Current NODE_ENV:", NODE_ENV);
 // -------------------
 // Login Rate Limiter
 // -------------------
-const loginLimiter = rateLimit({
+export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5,                   // max 5 login attempts per IP
   message: {
@@ -73,10 +76,6 @@ app.get("/", (req, res) => {
   res.send("Monefyy API running !Hell yeah");
 });
 
-// Apply rate limiter only to login
-app.post("/api/auth/login", loginLimiter, (req, res) => {
-  res.send("Login route placeholder 🔐");
-});
 
 // Example: other routes would be imported normally
 // import authRoutes from "./routes/authRoutes";
