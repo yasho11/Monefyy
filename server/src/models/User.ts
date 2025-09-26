@@ -18,7 +18,8 @@ class User extends Model {
 
   // NEW
   public currency!: string;
-  public avatar_url!: string;
+  public avatar_url!: string | null;
+  public avatar_public_id!: string | null;
 
   public is_verified!: boolean;
   public verification_code?: string;
@@ -28,11 +29,15 @@ class User extends Model {
   public UserType?: "admin" | "user" | "guest";
 
   // 🔥 Referral System
-  public referral_code!: string;     // each user has their own unique referral code
-  public referred_by?: number | null; // userId of the referrer (nullable)
+  public referral_code!: string;
+  public referred_by?: number | null;
 
   // 🔔 Reminder System
-  public last_email_sent?: Date;    // last email reminder sent
+  public last_email_sent?: Date;
+
+  //User tag
+
+  public tags?: string[];
 }
 
 User.init(
@@ -104,6 +109,10 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    avatar_public_id: {
+      type: DataTypes.STRING,
+      allowNull: true, // needed to delete/update on Cloudinary
+    },
     is_verified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -126,15 +135,14 @@ User.init(
     },
 
     // 🔥 REFERRAL SYSTEM
-referral_code: {
-  type: DataTypes.STRING(20),
-  allowNull: false,
-  unique: true,
-  defaultValue: () => {
-    // Generate a unique referral code (e.g., random string)
-    return require('crypto').randomBytes(10).toString('hex').slice(0, 20);
-  },
-},
+    referral_code: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      unique: true,
+      defaultValue: () => {
+        return require("crypto").randomBytes(10).toString("hex").slice(0, 20);
+      },
+    },
     referred_by: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -142,6 +150,11 @@ referral_code: {
 
     last_email_sent: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
     },
   },

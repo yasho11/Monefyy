@@ -5,6 +5,7 @@ import User from "./User";
 
 class Transaction extends Model {
   public id!: number;
+  public title!: string;
   public userId!: number;
   public type!: "income" | "expense";
   public category!: "savings" | "wants" | "needs";
@@ -25,6 +26,11 @@ Transaction.init(
       primaryKey: true,
       autoIncrement: true,
     },
+    title:{
+      type: DataTypes.STRING,
+      allowNull:false,
+      defaultValue: 'Title Here'
+    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -32,15 +38,15 @@ Transaction.init(
       onDelete: "CASCADE",
     },
     type: {
-      type: DataTypes.ENUM("income", "expense"),
+      type: DataTypes.ENUM("Income", "Expense"),
       allowNull: false,
     },
     category: {
-      type: DataTypes.ENUM("savings", "wants", "needs"),
+      type: DataTypes.ENUM("Savings", "Wants", "Needs"),
       allowNull: false,
     },
     tag: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING,
       allowNull: true,
     },
     amount: {

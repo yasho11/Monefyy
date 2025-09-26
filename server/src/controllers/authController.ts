@@ -172,6 +172,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     // Optionally update quest progress before returning
     await updateAllUserQuestProgress(user.id);
 
+    const exp_needed = user.level * 100;
     // Include any extra computed fields if needed
     const userData = {
       id: user.id,
@@ -181,11 +182,12 @@ export const getMe = async (req: AuthRequest, res: Response) => {
       avatar_url: user.avatar_url,
       is_verified: user.is_verified,
       streak: user.streak_count,
-      expGained: user.expGained ?? 0,
+      exp_point: user.exp_points,
       lastActive: user.last_active_date,
       subscription: user.subscription ?? null, // optional
       tier: user.tier ?? null,                 // optional
-      level: user.level ?? null,               // optional
+      level: user.level ?? null,              // optional
+      exp_needed: exp_needed,
     };
 
     return res.json(userData);
@@ -208,20 +210,22 @@ export const googleCallback = async (req: Request, res: Response) => {
   const token = (req.user as any)?.token;
 
   if (!user || !token) {
-    return res.status(400).json({ message: "Google login failed" });
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/error`);
   }
 
   await syncAllQuestsToUser(user.id);
   await updateAllUserQuestProgress(user.id);
 
-  return res.status(200).json({
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    token,
-  });
+  // ✅ Set JWT in cookie
+  res
+    .cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .redirect(`${process.env.FRONTEND_URL}/auth/success`);
 };
-
 
 
 
@@ -372,3 +376,30 @@ export const logout = async(req: Request, res: Response) =>{
   res.status(200).json({message: "Logged out successfully"});
 
 }
+
+
+//?-------------------------------------------------------------------
+
+export const updateProfilePicture = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id; // Assuming `authenticate` middleware attaches `user` object
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const updatedUser = await authService.updateProfilePicture(userId, file);
+
+    return res.status(200).json({
+      message: "Profile picture updated successfully",
+      user: {
+        id: updatedUser.id,
+        profilePic: updatedUser.avatar_url,
+      },
+    });
+  } catch (err: any) {
+    console.error("❌ Error updating profile picture:", err.message);
+    return res.status(500).json({ message: err.message || "Server error" });
+  }
+};

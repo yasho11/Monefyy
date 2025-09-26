@@ -50,7 +50,7 @@ export const protect = async (
     if (!token) {
       return res
         .status(401)
-        .json({ message: "Not authorized, token missing" });
+        .json({ message: "Not authorized!" });
     }
 
     // 4️⃣ Verify token

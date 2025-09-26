@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react"; // Show/hide icons
 import { useNavigate } from "react-router-dom";

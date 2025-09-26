@@ -1,10 +1,6 @@
 // server/src/services/transactionService.ts
 import Transaction from "../models/Transaction";
 import { Op } from "sequelize";
-import fs from "fs";
-import path from 'path';
-import csvParser from "csv-parser";
-import { format } from 'date-fns';
 
 interface TransactionInput {
   title: string;
@@ -17,11 +13,13 @@ interface TransactionInput {
 }
 
 interface FilterOptions {
-  type?: string;
+  title?: string;
   category?: string;
   tag?: string;
   from?: string;
   to?: string;
+  sortBy?: "date" | "amount";   // optional sort field
+  sortOrder?: "asc" | "desc";   // optional sort order
   limit?: number;
   offset?: number;
 }
@@ -32,16 +30,7 @@ interface BulkImportOptions {
   fileType: "csv" | "xlsx";
 }
 
-export interface DownloadTransactionsOptions {
-  userId: number;
-  filters?: {
-    type?: string;
-    category?: string;
-    tag?: string;
-    from?: string;
-    to?: string;
-  };
-}
+
 /**
  * Create a new transaction for a user
  */
@@ -62,18 +51,50 @@ export const createTransaction = async (userId: number, data: TransactionInput) 
 /**
  * Get all transactions for a user, optionally filtered by query params
  */
-export const getTransactionsByUser = async (userId: number, filters: any) => {
+export const getFilteredTransactions = async (userId: number, filters: FilterOptions) => {
+  const {
+    title,
+    category,
+    tag,
+    from,
+    to,
+    sortBy = "date",
+    sortOrder = "desc",
+    limit = 25,
+    offset = 0,
+  } = filters;
+
   const where: any = { userId };
 
-  if (filters.category) where.category = filters.category;
-  if (filters.tag) where.tag = filters.tag;
-  if (filters.startDate || filters.endDate) {
-    where.date = {};
-    if (filters.startDate) where.date[Op.gte] = new Date(filters.startDate);
-    if (filters.endDate) where.date[Op.lte] = new Date(filters.endDate);
+  if (title) {
+    where.title = { [Op.iLike]: `%${title}%` }; // case-insensitive search
   }
 
-  return Transaction.findAll({ where, order: [["date", "DESC"]] });
+  if (category) {
+    where.category = category;
+  }
+
+  if (tag) {
+    where.tag = tag;
+  }
+
+  if (from || to) {
+    where.date = {};
+    if (from) where.date[Op.gte] = new Date(from);
+    if (to) where.date[Op.lte] = new Date(to);
+  }
+
+  const transactions = await Transaction.findAndCountAll({
+    where,
+    order: [[sortBy, sortOrder]],
+    limit,
+    offset,
+  });
+
+  return {
+    total: transactions.count,
+    transactions: transactions.rows,
+  };
 };
 
 /**
@@ -98,14 +119,7 @@ export const deleteTransactionById = async (userId: number, id: number) => {
   return true;
 };
 
-/**
- * Get all unique tags created by a user
- */
-export const getUniqueTagsByUser = async (userId: number) => {
-  const transactions = await Transaction.findAll({ where: { userId }, attributes: ["tag"] });
-  const tagsSet = new Set(transactions.map(t => t.tag).filter(Boolean));
-  return Array.from(tagsSet);
-};
+
 
 /**
  * Get single transaction 
@@ -117,36 +131,7 @@ export const getTransactionById = async (userId: number, transactionId: number) 
   });
 };
 
-
-
-
-export const getFilteredTransactions = async (userId: number, filters: FilterOptions) => {
-  const where: any = { userId };
-
-  if (filters.type) where.type = filters.type;
-  if (filters.category) where.category = filters.category;
-  if (filters.tag) where.tag = filters.tag;
-
-  if (filters.from && filters.to) {
-    where.date = { [Op.between]: [filters.from, filters.to] };
-  } else if (filters.from) {
-    where.date = { [Op.gte]: filters.from };
-  } else if (filters.to) {
-    where.date = { [Op.lte]: filters.to };
-  }
-
-  return await Transaction.findAll({
-    where,
-    order: [["date", "DESC"]],
-    limit: filters.limit,
-    offset: filters.offset,
-  });
-};
-
-
-
-
-
+/*
 export const generateTransactionsCSV = async ({ userId, filters }: DownloadTransactionsOptions) => {
   // Fetch filtered transactions
   const transactions = await getFilteredTransactions(userId, filters || {});
@@ -183,3 +168,4 @@ export const generateTransactionsCSV = async ({ userId, filters }: DownloadTrans
 
   return filePath;
 };
+*/

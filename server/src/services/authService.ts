@@ -4,6 +4,7 @@ import { generateToken } from "../utils/jwt";
 import { sendEmail } from "../utils/mailer";
 import { v4 as uuidv4 } from "uuid";
 import { AuthUserDTO } from "../utils/authDTO";
+import cloudinary from "../config/cloudinary";
 
 interface RegisterData {
   username: string;
@@ -54,7 +55,7 @@ export const loginUser = async (email: string, password: string): Promise<AuthUs
     username: user.username,
     email: user.email,
     currency: user.currency,
-    avatar_url: user.avatar_url,
+    avatar_url: user.avatar_url || 'https://avatar.iran.liara.run/public/',
     is_verified: user.is_verified,
     token: generateToken(user.id),
     last_active_date: user.last_active_date,
@@ -227,3 +228,29 @@ export async function markEmailSent(user: User) {
   user.last_email_sent = new Date();
   await user.save();
 }
+
+
+//?-----------------------------------------------------------------
+
+export const updateProfilePicture = async (userId: string, file: Express.Multer.File) => {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error("User not found");
+
+  // If user already has a profile picture, delete the old one
+  if (user.avatar_public_id) {
+    await cloudinary.uploader.destroy(user.avatar_public_id);
+  }
+
+  // Upload new image to Cloudinary
+  const result = await cloudinary.uploader.upload(file.path, {
+    folder: "profiles",
+    transformation: [{ width: 300, height: 300, crop: "fill" }],
+  });
+
+  // Save to DB
+  user.avatar_url = result.secure_url;
+  user.avatar_public_id = result.public_id;
+  await user.save();
+
+  return user;
+};

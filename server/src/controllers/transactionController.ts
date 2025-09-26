@@ -9,8 +9,6 @@ import {
   getFilteredTransactions,
   updateTransactionById,
   deleteTransactionById,
-  getTransactionById,
-  generateTransactionsCSV,
 } from "../services/transactionService";
 
 // Custom AuthRequest type
@@ -20,6 +18,19 @@ export interface AuthRequest {
   params: any;
   query: any;
   file?: Express.Multer.File;
+}
+
+
+export interface FilterOptions {
+  title?: string;
+  category?: string;
+  tag?: string;
+  from?: string;
+  to?: string;
+  sortBy?: "date" | "amount";
+  sortOrder?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
 }
 
 // ------------------- Existing CRUD operations -------------------
@@ -37,28 +48,44 @@ export const addTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
+//?-------------------------------------------------------------------------------------
 export const getTransactions = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { type, category, tag, from, to, limit, offset } = req.query;
+    const {
+      title,
+      category,
+      tag,
+      from,
+      to,
+      sortBy,
+      sortOrder,
+      limit,
+      offset,
+    } = req.query;
+
     const filters = {
-      type: type as string | undefined,
-      category: category as string | undefined,
-      tag: tag as string | undefined,
-      from: from as string | undefined,
-      to: to as string | undefined,
+      title: title as string,
+      category: category as string,
+      tag: tag as string,
+      from: from as string,
+      to: to as string,
+      sortBy: sortBy as "date" | "amount",
+      sortOrder: sortOrder as "asc" | "desc",
       limit: limit ? parseInt(limit as string, 10) : undefined,
       offset: offset ? parseInt(offset as string, 10) : undefined,
     };
 
-    const transactions = await getFilteredTransactions(userId, filters);
-    res.json(transactions);
+    const result = await getFilteredTransactions(userId, filters);
+    res.json(result);
   } catch (err: any) {
+    console.error(err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+//?----------------------------------------------------------------------------------------------
 
 export const updateTransaction = async (req: AuthRequest, res: Response) => {
   try {
@@ -77,6 +104,8 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
+
+//?--------------------------------------------------------------------------------------------
 export const deleteTransaction = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -92,24 +121,13 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getTransaction = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { id } = req.params;
-    const transaction = await getTransactionById(userId, Number(id));
-    if (!transaction) return res.status(404).json({ message: "Transaction not found" });
 
-    res.json(transaction);
-  } catch (err: any) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
+
 
 
 // ------------------- Download CSV -------------------
-
+/*
 export const downloadTransactions = async (req: AuthRequest, res: Response) => {
   try{
     const userId = req.user?.id;
@@ -135,4 +153,4 @@ export const downloadTransactions = async (req: AuthRequest, res: Response) => {
     res.status(500).json({message: "Server error", error: err.message});
   }
   
-}
+}*/

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react"; // Modern icons
-import GoogleLogo from "../assets/google.png"; // Google logo
+import GoogleLogo from "../../assets/google.png"; // Google logo
 
 interface FormData {
   email: string;

@@ -5,8 +5,7 @@ import {
   getTransactions,
   updateTransaction,
   deleteTransaction,
-  getTransaction,
-  downloadTransactions,
+
 } from "../controllers/transactionController";
 import { protect } from "../middlewares/authMiddleware";
 import {upload} from "../middlewares/upload";
@@ -31,10 +30,10 @@ router.delete("/:id", deleteTransaction as RequestHandler);
 
 
 // Get transaction by ID
-router.get("/:id", getTransaction as RequestHandler );
+// router.get("/:id", getTransaction as RequestHandler );
 
 // Download all transactions as CSV
-router.get("/download/csv", downloadTransactions as RequestHandler);
+// router.get("/download/csv", downloadTransactions as RequestHandler);
 
 
 export default router;

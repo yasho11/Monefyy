@@ -4,17 +4,21 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 
 // Pages
-import { SignupPage } from "./pages/SingupPage";
-import { LoginPage } from "./pages/LoginPage";
-import { VerifyCode } from "./pages/VerifyCodePage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { Homepage } from "./pages/Homepage";
-import { ProfilePage } from "./pages/ProfilePage";
+import { SignupPage } from "./pages/auth/SingupPage";
+import { LoginPage } from "./pages/auth/LoginPage";
+import { VerifyCode } from "./pages/auth/VerifyCodePage";
+import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
+import { Homepage } from "./pages/dashboard/Homepage";
+import { ProfilePage } from "./pages/dashboard/ProfilePage";
 
 // Components
-import Sidebar from "./components/Sidebar";
-import Navbar from "./components/Navbar";
-import { VerifyBannerBottom } from "./components/VerifyBanner";
+import Sidebar from "./components/layouts/Sidebar";
+import Navbar from "./components/layouts/Navbar";
+import { VerifyBannerBottom } from "./components/auth/VerifyBanner";
+import { GoogleAuthSuccess } from "./pages/auth/GoogleAuthSuccessPage";
+import { TransactionsPage } from "./pages/Transaction/TransactionPage";
+
+
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -23,6 +27,8 @@ function App() {
 
   const authPages = ["/login", "/signup", "/verify", "/reset-password"];
   const isAuthPage = authPages.includes(location.pathname);
+
+  
 
   useEffect(() => {
     const init = async () => {
@@ -55,7 +61,6 @@ function App() {
         {authUser && !isAuthPage && (
           <Navbar
             pageTitle="Dashboard"
-            onAddClick={() => console.log("Add clicked")}
           />
         )}
 
@@ -69,7 +74,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/verify" element={<VerifyCode />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-
+            <Route path="/auth/success" element={<GoogleAuthSuccess/>}/>
             <Route
               path="/"
               element={authUser ? <Homepage /> : <Navigate to="/login" />}
@@ -77,6 +82,10 @@ function App() {
             <Route
               path="/profile"
               element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/transaction"
+              element={authUser ? <TransactionsPage /> : <Navigate to="/login" />}
             />
           </Routes>
 

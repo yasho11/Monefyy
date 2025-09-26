@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import currencies from "../data/currencies.json";
+import currencies from "../../data/currencies.json";
 import { Eye, EyeOff, HelpCircle } from "lucide-react";
-import GoogleLogo from "../assets/google.png";
+import GoogleLogo from "../../assets/google.png";
 
 interface FormData {
   username: string;
@@ -53,8 +53,9 @@ export const SignupPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      await signup(formData);
-      navigate("/verify");
+      const success = await signup(formData);
+      
+      if(success) return navigate("/verify");
     }
   };
 

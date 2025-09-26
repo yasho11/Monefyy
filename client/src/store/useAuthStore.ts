@@ -3,10 +3,11 @@ import { axiosInstance } from "../libs/axios";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 
+
 interface AuthStore {
   authUser: any;
   isSigningUp: boolean;
-  signup: (data: any) => void;
+  signup: (data: any) => Promise<boolean>;
   isLoggingIn: boolean;
   login: (data:any) => Promise<boolean>;
   checkAuth: () => void;
@@ -25,7 +26,9 @@ interface AuthStore {
   resetPassword: (data: { email: string; code: string; newPassword: string }) => void;
   sendVerificationMail: (data:any) => void;
   isResetting: boolean;
-
+  updateProfilePicture: (file: File) => Promise<boolean>;
+  isUpdatingProfile: boolean;
+  UpdateProfile: (data: any) => Promise<Boolean>;
 }
 
 
@@ -41,7 +44,7 @@ export const useAuthStore = create<AuthStore>((set)=> ({
   userInfo: null,
   isGettingInfo: false,
   isResetting: false,
-
+  isUpdatingProfile: false,
 
   //?------------------------------------------------
   //! @name: signup
@@ -54,16 +57,18 @@ export const useAuthStore = create<AuthStore>((set)=> ({
       const response = await axiosInstance.post("/auth/register", data);
       set({authUser: response.data.user});
       toast.success("Account created successfully");
+      return true;
     } catch (error) {
 
       if(axios.isAxiosError(error)){
         console.error("Sign up error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Sing up failed : axios" )
+        toast.error(error.response?.data?.message || "Sign up failed" )
+        
       }else {
         console.error("Unexpected error: ", error);
         toast.error("Something went wrong!");
       }
-      
+      return false;
     }finally {
       set({isSigningUp: false});
     }
@@ -89,7 +94,7 @@ export const useAuthStore = create<AuthStore>((set)=> ({
     } catch (error) {
       if(axios.isAxiosError(error)){
         console.error("Login error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Log In failed!: axios");
+        toast.error(error.response?.data?.message || "Log In failed!");
 
       }else{
         console.error("Unexpected error: " , error);
@@ -117,12 +122,12 @@ export const useAuthStore = create<AuthStore>((set)=> ({
     } catch (error) {
       if(axios.isAxiosError(error)){
         console.error("Check auth error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Fail to check auth: axios");
+        
         
 
       }else{
         console.error("Unexpected error: " , error);
-        toast.error("Something went wrong!")
+        toast.error("Something went wrong!, try again")
       }
       set({authUser: null})
     }finally{
@@ -147,7 +152,7 @@ export const useAuthStore = create<AuthStore>((set)=> ({
     } catch (error) {
         if(axios.isAxiosError(error)){
         console.error("Verification error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Verification failed!: axios");
+        toast.error(error.response?.data?.message || "Verification failed!");
 
       }else{
         console.error("Unexpected error: " , error);
@@ -170,7 +175,7 @@ export const useAuthStore = create<AuthStore>((set)=> ({
     } catch (error) {
      if(axios.isAxiosError(error)){
         console.error("Verification error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Verification failed!: axios");
+        toast.error(error.response?.data?.message || "Verification failed!");
 
       }else{
         console.error("Unexpected error: " , error);
@@ -199,7 +204,7 @@ export const useAuthStore = create<AuthStore>((set)=> ({
     } catch (error) {
      if(axios.isAxiosError(error)){
         console.error("Log out error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Logout failed!: axios");
+        toast.error(error.response?.data?.message || "Logout failed!");
 
       }else{
         console.error("Unexpected error: " , error);
@@ -225,7 +230,7 @@ export const useAuthStore = create<AuthStore>((set)=> ({
     } catch (error) {
            if(axios.isAxiosError(error)){
         console.error("Fetching error: ", error.response?.data);
-        toast.error(error.response?.data?.message || "Failed to get user info!: axios");
+        toast.error(error.response?.data?.message || "Failed to get user info!");
 
       }else{
         console.error("Unexpected error: " , error);
@@ -244,9 +249,11 @@ export const useAuthStore = create<AuthStore>((set)=> ({
   //! @desc: function to sign in with google
   
   googleLogin: () => {
-    // Redirect user to backend Google OAuth route
-    window.location.href = "/auth/google";
+  // Redirect to full backend route for Google OAuth
+  const backendURL = import.meta.env.VITE_BACKEND_URL;
+  window.location.href = `${backendURL}/api/auth/google`;
   },
+
 
 
   //?-----------------------------------------------------------------
@@ -295,5 +302,68 @@ sendVerificationMail: async(data) =>  {
 },
 
 
+//?-------------------------------------------------------------------------------------
+
+
+
+
+
+
+updateProfilePicture: async (file: File) => {
+
+  try {
+    set({ isUpdatingProfile: true }); // optional state if you want a loading indicator
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await axiosInstance.put("/auth/profile-picture", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    set((state) => ({
+      authUser: { ...state.authUser, avatar_url: response.data.avatar_url },
+    }));
+
+    toast.success("Profile picture updated successfully!");
+    console.log("Updated AuthUser:", response.data);
+
+    return true;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      console.error("Update profile picture error:", error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to update profile picture!");
+    } else {
+      console.error("Unexpected error:", error);
+      toast.error("Something went wrong!");
+    }
+    return false;
+  } finally {
+    set({ isUpdatingProfile: false });
+  }
+},
+
+
+//?-------------------------------------------------------------------------------------
+
+  UpdateProfile: async (data:any) => {
+    try {
+      set({isUpdatingProfile: true});
+      await axiosInstance.put("/auth/edit-profile", data);
+      toast.success("Profile updated successfully!");
+      return true;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("Update profile picture error:", error.response?.data);
+          toast.error(error.response?.data?.message || "Failed to update profile picture!");
+        } else {
+          console.error("Unexpected error:", error);
+          toast.error("Something went wrong!");
+        }
+      return false;
+    }finally{
+      set({isUpdatingProfile: false});
+    }
+  }
 
 }))

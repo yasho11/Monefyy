@@ -12,7 +12,7 @@ const Sidebar = ({ onToggle }: SidebarProps) => {
 
   const menuItems = [
     { name: "Dashboard", icon: <BarChart3 size={20} />, path: "/" },
-    { name: "Transactions", icon: <List size={20} />, path: "/" },
+    { name: "Transactions", icon: <List size={20} />, path: "/transaction" },
     { name: "Budgets", icon: <Wallet size={20} />, path: "/" },
     { name: "Reports", icon: <FileText size={20} />, path: "/" },
     { name: "Goals", icon: <Target size={20} />, path: "/" },

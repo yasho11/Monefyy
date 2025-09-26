@@ -6,6 +6,7 @@ import { validateRequest } from "../middlewares/validate"; // the middleware we 
 import * as authController from "../controllers/authController";
 import { createReferralCode } from "../controllers/referralController";
 import { loginLimiter } from "../server"; 
+import multer from "multer";
  
 const router = express.Router();
 
@@ -120,9 +121,17 @@ router.get("/email-verified", protect, authController.isEmailVerified);
 router.get("/check-auth",  protect, authController.checkAuth)
 
 
+const upload = multer({ dest: "uploads/" });
+
+router.put("/profile-picture", protect, upload.single("image"), authController.updateProfilePicture);
+
+
 
 //! Logout
 
 router.get("/logout", protect, authController.logout);
+
+
+
 
 export default router;

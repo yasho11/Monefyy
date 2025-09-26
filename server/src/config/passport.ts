@@ -32,6 +32,7 @@ passport.use(
             // Link Google ID to existing account
             existingEmailUser.google_id = profile.id;
             existingEmailUser.provider = "google";
+            existingEmailUser.is_verified = true;
             await existingEmailUser.save();
             user = existingEmailUser;
           } else {
@@ -40,6 +41,7 @@ passport.use(
               username: profile.displayName,
               email: profile.emails?.[0].value,
               google_id: profile.id,
+              is_verified: true,
               provider: "google",
             });
           }
